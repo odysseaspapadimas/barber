@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "barber",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "d1_databases": [
+    {
+      "binding": "barber",
+      "database_name": "barber",
+      "database_id": "396efb8a-8b8f-45ff-97ac-b7c1f4194d93",
+      "migrations_dir": "drizzle/migrations",
+      "remote": true
+    }
+  ]
+}
