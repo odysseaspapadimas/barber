@@ -12,5 +12,9 @@
       "migrations_dir": "drizzle/migrations",
       "remote": true
     }
-  ]
+  ],
+  "vars": {
+    "ADMIN_PASSWORD": "changeme",
+    "SESSION_SECRET": "dev-secret-change-in-production-min-32-chars-required"
+  }
 }

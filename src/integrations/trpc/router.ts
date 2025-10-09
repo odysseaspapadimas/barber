@@ -1,18 +1,10 @@
-import { createTRPCRouter, publicProcedure } from "./init";
-
-import { db } from "@/db";
-import { services } from "@/db/schema";
-import { servicesInsertSchema } from "@/lib/types";
-import type { TRPCRouterRecord } from "@trpc/server";
-
-const servicesRouter = {
-  list: publicProcedure.query(() => db.query.services.findMany()),
-  add: publicProcedure.input(servicesInsertSchema).mutation(({ input }) => {
-    return db.insert(services).values(input).returning();
-  }),
-} satisfies TRPCRouterRecord;
+import { authRouter } from "@/server/auth";
+import { createTRPCRouter } from "./init";
+import { servicesRouter } from "@/server/services";
 
 export const trpcRouter = createTRPCRouter({
   services: servicesRouter,
+  auth: authRouter,
 });
+
 export type TRPCRouter = typeof trpcRouter;
