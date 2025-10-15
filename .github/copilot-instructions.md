@@ -1,46 +1,204 @@
-This repository uses TanStack Start (React), tRPC, Drizzle (Cloudflare D1), and Better Auth. The note below highlights the codebase-specific patterns and workflows an AI coding agent should follow to make safe, useful changes.
+# Barber Shop Management System - AI Agent Guide
 
-Key quick facts
-- Dev: pnpm dev (Vite on port 3000)
-- Build: pnpm build
-- DB migrations: drizzle-kit generate / drizzle-kit migrate (migrations in `drizzle/migrations`)
-- Cloudflare Worker entry: `src/server.ts`, Wrangler config at `wrangler.json` (d1 binding `barber`)
+This is a barber shop booking and management system built with **TanStack Start (React)**, **tRPC**, **Drizzle ORM (Cloudflare D1)**, and **Better Auth**. Read this guide to understand the architecture and conventions before making changes.
 
-Architecture / major components (read these files):
-- Routes & SSR: `src/routes/*` (file-based routes). Root: `src/routes/__root.tsx` and admin guard `src/routes/admin/route.tsx`.
-- tRPC wiring: `src/integrations/trpc/*` — `init.ts` (context, protected/admin procedures), `router.ts` (combined routers), `react.ts` (TRPC provider). The tRPC HTTP adapter is routed at `src/routes/api.trpc.$.tsx`.
-- Auth: `src/lib/auth.ts` (Better Auth config + reactStartCookies integration). Server endpoints that call Better Auth (set-cookie propagation) are in `src/server/auth.ts` and `/api/auth/$` route.
-- DB: `src/db/schema.ts` defines Drizzle tables (source of truth). `src/db/index.ts` wires D1 via drizzle. Use drizzle-kit to generate migrations from schema changes.
-- UI: `src/components/*` and `src/routes/admin/*` for admin pages.
+## Quick Commands
 
-Important patterns and gotchas
-- SSR cookie propagation: server-side tRPC calls rely on passing incoming request headers to Better Auth. The `api.trpc` route creates a `responseHeaders` Headers object and returns them via `responseMeta()` so server-side calls can set `set-cookie` and propagate them to the client. Keep that pattern when adding endpoints that may set cookies.
-- Header access in procedures: use the tRPC context `ctx.request.headers` on the server to call Better Auth (do not assume `getRequestHeaders()` from client components). For client-side calls, tRPC client links are configured to forward headers during SSR (see `root-provider.tsx`).
-- Authentication helpers: `protectedProcedure` and `adminProcedure` are implemented in `src/integrations/trpc/init.ts`. Use them to protect tRPC routes (do not duplicate logic).
-- TanStack Query SSR prefetch: route `loader` functions call `context.trpc.*.queryOptions()` and `context.queryClient.prefetchQuery(...)` to prefetch data. Follow the same approach for new routes to preserve SSR hydration.
-- Mutations must invalidate queries: use `trpc.*.mutationOptions({ onSuccess: () => queryClient.invalidateQueries({ queryKey: trpc.<collection>.list.queryKey() }) })` or call `queryClient.invalidateQueries` manually after mutation success. This codebase uses `useMutation` + `mutationOptions` patterns.
+```bash
+pnpm install          # Install dependencies
+pnpm dev              # Start dev server (localhost:3000)
+pnpm build            # Build for Cloudflare Workers
+pnpm deploy           # Deploy to Cloudflare (wrangler deploy)
+pnpm db:generate      # Generate Drizzle migrations from schema
+pnpm db:migrate       # Apply migrations to D1
+pnpm db:studio        # Open Drizzle Studio GUI
+pnpm test             # Run Vitest tests
+```
 
-Where to look for examples
-- Implemented service CRUD patterns: `src/server/services.ts`, `src/routes/admin/index.tsx` (CreateServiceForm, ServiceRow) — shows validation, mutationOptions, and invalidation.
-- Staff CRUD: `src/server/staff.ts`, `src/routes/admin/staff.tsx` — full create/update/delete flows and prefetch in loader.
-- Login/logout + Set-Cookie: `src/server/auth.ts`, `src/routes/admin/login.tsx`.
+## Architecture Overview
 
-Developer workflows & commands
-- Install: `pnpm install`
-- Run dev server: `pnpm dev` (port 3000). Uses Vite + TanStack Start dev server.
-- Run migrations: `pnpm db:generate` to regenerate Drizzle migration files, `pnpm db:migrate` to apply. Migrations live in `drizzle/migrations` and are applied by Wrangler/D1 in production via `wrangler deploy`.
-- Build for production (Cloudflare Workers): `pnpm build` then `wrangler deploy`.
-- Run tests: `pnpm test` (Vitest). Tests are minimal; run locally.
+### File-Based Routing (`src/routes/*`)
+- TanStack Start uses file-based routing with `createFileRoute`
+- Root layout: `src/routes/__root.tsx` (includes devtools, head tags)
+- Admin guard: `src/routes/admin/route.tsx` (checks auth via `beforeLoad`, redirects to `/admin/login`)
+- Route files can export `loader` (SSR data fetching), `component`, `pendingComponent`, `errorComponent`
+- Server routes can define GET/POST handlers via `server.handlers` (see `src/routes/api/auth/$.ts`)
 
-Project-specific conventions
-- File-based routes use `createFileRoute` with `loader` and `ssr` decisions. Prefer `useSuspenseQuery` for data-bound components when SSR prefetching is used.
-- Use `trpc.<router>.<endpoint>.<queryOptions|mutationOptions|queryKey>()` helpers to integrate tRPC + tanstack-query. Example: `trpc.services.list.queryOptions()` used in route loader prefetch.
-- Better Auth integration uses `auth.api.*` methods directly in server code and always forwards `ctx.request.headers` and collects `Set-Cookie` from responses into `ctx.responseHeaders` so the outer HTTP reply includes cookie headers.
-- Database code uses Drizzle `sqliteTable` + `db.query`/`db.insert`/`db.update` patterns. The canonical table shapes are in `src/db/schema.ts`.
+### tRPC Integration (`src/integrations/trpc/*`)
+- **Context & procedures**: `init.ts` defines tRPC context with `request`, `env`, `responseHeaders`. Exports `publicProcedure`, `protectedProcedure`, `adminProcedure`.
+- **Router**: `router.ts` combines sub-routers (`services`, `staff`, `schedules`, `bookings`, `auth`)
+- **React client**: `react.ts` exports `useTRPC()` hook
+- **TanStack Query provider**: `src/integrations/tanstack-query/root-provider.tsx` wires tRPC client with superjson transformer and SSR header forwarding via `getRequestHeaders()` during SSR
+- **HTTP adapter**: `src/routes/api.trpc.$.tsx` routes `/api/trpc/*` to `fetchRequestHandler`, passing `resHeaders` to tRPC context as `responseHeaders`
 
-Safety and style notes for changes
-- Preserve `responseHeaders` propagation in any new server handler that uses Better Auth (login, logout, sign-up). Missing this will break cookie setting during SSR.
-- Keep all auth checks in `protectedProcedure`/`adminProcedure` rather than scattering header/session checks around.
-- When adding client components that run during SSR, ensure loaders prefetch the queries (use `context.trpc...queryOptions()` in `loader`) so the HTML contains hydrated data.
+### Better Auth (`src/auth/server.ts`)
+- Config uses `drizzleAdapter`, `emailAndPassword` provider, `reactStartCookies()` plugin for SSR cookie handling
+- Session lifetime: 30 days, cookie cache enabled
+- API endpoints at `/api/auth/*` (see `src/routes/api/auth/$.ts` for catch-all handler)
+- **Critical**: All tRPC procedures that call `auth.api.*` must pass `ctx.request.headers` and capture `set-cookie` from responses into `ctx.responseHeaders` (see `src/integrations/trpc/routers/auth.ts` for example)
 
-If anything above is unclear or you need examples of any pattern, ask for a targeted snippet and I will expand.
+### Database (Drizzle + D1)
+- Schema: `src/db/schema.ts` (source of truth). Tables: `services`, `staff`, `staff_schedules`, `blackouts`, `customers`, `bookings`, `user`, `session`, `account`, `verification`
+- Timestamps are stored as integer ms (`timestamp_ms` mode), booleans as 0/1 (`boolean` mode)
+- Migrations: `drizzle/migrations/*`, generated via `drizzle-kit generate`, applied during deployment
+- D1 binding: `barber` (see `wrangler.json`)
+
+### UI Components (`src/components/*`)
+- Tailwind CSS 4 + shadcn/ui primitives (button, card, input, dialog, etc.)
+- Admin-specific components in `src/components/admin/` (e.g., `AdminHeader.tsx`)
+- Forms use controlled state + Zod validation (see `src/routes/admin/services.tsx` for example)
+
+## Critical Patterns & Gotchas
+
+### SSR Cookie Propagation
+**Problem**: Server-side tRPC mutations that set cookies (login, logout) must propagate `set-cookie` headers to the client.
+
+**Solution**: The tRPC HTTP adapter in `src/routes/api.trpc.$.tsx` passes `resHeaders` as `responseHeaders` in context. Mutations that call `auth.api.*` with `asResponse: true` extract `set-cookie` and add to `ctx.responseHeaders`:
+
+```ts
+const response = await auth.api.signInEmail({ body: input, headers: ctx.request.headers, asResponse: true });
+const setCookieHeader = response.headers.get("set-cookie");
+if (setCookieHeader && ctx.responseHeaders) {
+  ctx.responseHeaders.set("set-cookie", setCookieHeader);
+}
+```
+
+**Where to see this**: `src/integrations/trpc/routers/auth.ts` (login, logout mutations)
+
+### SSR Data Prefetching
+**Pattern**: Route `loader` functions prefetch tRPC queries so SSR renders with data. Components use `useSuspenseQuery` to consume prefetched data.
+
+**Example** (`src/routes/admin/services.tsx`):
+```ts
+export const Route = createFileRoute("/admin/services")({
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery(context.trpc.services.list.queryOptions());
+  },
+  component: RouteComponent,
+});
+
+function ServicesList() {
+  const trpc = useTRPC();
+  const { data: services } = useSuspenseQuery(trpc.services.list.queryOptions());
+  // ...
+}
+```
+
+### Query Invalidation After Mutations
+**Rule**: Always invalidate relevant queries after mutations to keep UI in sync.
+
+**Pattern** (`src/routes/admin/services.tsx`):
+```ts
+const { mutateAsync: addService } = useMutation(
+  trpc.services.add.mutationOptions({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: trpc.services.list.queryKey() });
+    },
+  })
+);
+```
+
+### Authentication Procedures
+- Use `protectedProcedure` for any endpoint requiring a valid session
+- Use `adminProcedure` for admin-only endpoints (checks `user.isAdmin` flag in DB)
+- **Never** duplicate auth checks—rely on these helpers in `src/integrations/trpc/init.ts`
+
+**Example** (`src/integrations/trpc/routers/services.ts`):
+```ts
+export const servicesRouter = {
+  list: publicProcedure.query(async () => { /* ... */ }),
+  add: adminProcedure.input(serviceBaseSchema).mutation(async ({ input }) => { /* ... */ }),
+};
+```
+
+### Database Schema Changes
+1. Edit `src/db/schema.ts`
+2. Run `pnpm db:generate` to create migration SQL in `drizzle/migrations/`
+3. Run `pnpm db:migrate` to apply locally (or `wrangler deploy` applies in production)
+4. **Never** manually edit migration files; regenerate from schema
+
+## Code Examples
+
+### Adding a New tRPC Router
+1. Create `src/integrations/trpc/routers/myrouter.ts`:
+   ```ts
+   import { adminProcedure, publicProcedure } from "../init";
+   import type { TRPCRouterRecord } from "@trpc/server";
+   import { z } from "zod";
+
+   export const myRouter = {
+     list: publicProcedure.query(async () => { /* ... */ }),
+     create: adminProcedure.input(z.object({ name: z.string() })).mutation(async ({ input }) => { /* ... */ }),
+   } satisfies TRPCRouterRecord;
+   ```
+2. Register in `src/integrations/trpc/router.ts`:
+   ```ts
+   export const trpcRouter = createTRPCRouter({
+     // ...existing routers
+     myRouter,
+   });
+   ```
+
+### Adding a New Admin Page with Prefetch
+1. Create `src/routes/admin/mypage.tsx`:
+   ```tsx
+   import { createFileRoute } from "@tanstack/react-router";
+   import { useTRPC } from "@/integrations/trpc/react";
+   import { useSuspenseQuery } from "@tanstack/react-query";
+
+   export const Route = createFileRoute("/admin/mypage")({
+     loader: async ({ context }) => {
+       await context.queryClient.prefetchQuery(context.trpc.myRouter.list.queryOptions());
+     },
+     component: MyPageComponent,
+   });
+
+   function MyPageComponent() {
+     const trpc = useTRPC();
+     const { data } = useSuspenseQuery(trpc.myRouter.list.queryOptions());
+     return <div>{JSON.stringify(data)}</div>;
+   }
+   ```
+
+### Form Submission with Mutation + Invalidation
+See `src/routes/admin/services.tsx` `CreateServiceForm` and `ServiceRow` for full CRUD patterns including:
+- Controlled form state
+- Zod validation before mutation
+- `useMutation` with `mutationOptions({ onSuccess: () => invalidateQueries(...) })`
+- Optimistic UI updates optional (not used currently)
+
+## Reference Files for Common Tasks
+
+| Task | Reference Files |
+|------|----------------|
+| CRUD patterns (services) | `src/integrations/trpc/routers/services.ts`, `src/routes/admin/services.tsx` |
+| CRUD patterns (staff) | `src/integrations/trpc/routers/staff.ts`, `src/routes/admin/staff.tsx` |
+| Auth login/logout | `src/integrations/trpc/routers/auth.ts`, `src/routes/admin/login.tsx` |
+| Admin route guard | `src/routes/admin/route.tsx` |
+| SSR data prefetch | `src/routes/admin/services.tsx` (loader + useSuspenseQuery) |
+| Cookie propagation | `src/routes/api.trpc.$.tsx`, `src/integrations/trpc/routers/auth.ts` |
+| Database schema | `src/db/schema.ts` |
+| tRPC procedures | `src/integrations/trpc/init.ts` |
+
+## Safety Checklist
+
+Before submitting a PR or making changes:
+- [ ] Auth mutations propagate `set-cookie` to `ctx.responseHeaders`
+- [ ] Mutations invalidate relevant queries in `onSuccess`
+- [ ] SSR routes prefetch data in `loader` and use `useSuspenseQuery`
+- [ ] Protected routes use `protectedProcedure` or `adminProcedure`, not manual checks
+- [ ] Schema changes followed by `pnpm db:generate` and migration committed
+- [ ] Forms validate inputs with Zod before calling tRPC mutations
+
+## Deployment
+
+- **Local dev**: `pnpm dev` (uses `.dev.vars` for secrets, local D1 database)
+- **Production**: `pnpm build && pnpm deploy` (reads `wrangler.json`, uses remote D1)
+- **Environment vars**: `ADMIN_PASSWORD`, `SESSION_SECRET` in `wrangler.json` `vars` (dev) or Cloudflare dashboard (prod)
+
+## Need Help?
+
+- TanStack Start docs: [tanstack.com/start](https://tanstack.com/start)
+- tRPC docs: [trpc.io](https://trpc.io)
+- Better Auth docs: [better-auth.com](https://better-auth.com)
+- Drizzle ORM docs: [orm.drizzle.team](https://orm.drizzle.team)
