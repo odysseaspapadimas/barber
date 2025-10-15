@@ -19,7 +19,13 @@ import { getRequestHeaders } from "@tanstack/react-start/server";
 function getUrl() {
   const base = (() => {
     if (typeof window !== "undefined") return "";
-    return `http://localhost:${process.env.PORT ?? 3000}`;
+    if (process.env.NODE_ENV === 'production') {
+      return 'http://127.0.0.1:8787';
+    } else if (process.env.NODE_ENV === 'development') {
+      return 'http://localhost:3000';
+    } else {
+      return 'http://localhost:8787';
+    }
   })();
   return `${base}/api/trpc`;
 }

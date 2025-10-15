@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { staff } from "@/db/schema";
-import { adminProcedure } from "../init";
+import { adminProcedure, publicProcedure } from "../init";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";
@@ -26,7 +26,7 @@ const staffUpdateSchema = staffCreateSchema
 
 // Minimal staff router: list (admins), create (admins), update, delete (admins)
 export const staffRouter = {
-  list: adminProcedure.query(async () => {
+  list: publicProcedure.query(async () => {
     return db.select().from(staff).orderBy(asc(staff.name)).all();
   }),
 
