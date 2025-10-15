@@ -1,4 +1,5 @@
-import { queryClient, trpc } from "@/integrations/tanstack-query/root-provider";
+import { useQueryClient } from "@tanstack/react-query";
+import { useTRPC } from "@/integrations/trpc/react";
 import type { StaffSelect } from "@/lib/types";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -63,6 +64,7 @@ const staffFormSchema = z.object({
 });
 
 function StaffContent() {
+  const trpc = useTRPC();
   const { data: staff } = useSuspenseQuery(trpc.staff.list.queryOptions());
 
   return (
@@ -85,6 +87,8 @@ function StaffContent() {
 }
 
 function CreateStaffForm() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -208,6 +212,8 @@ function CreateStaffForm() {
 }
 
 function StaffRow({ member }: { member: StaffSelect }) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     name: member.name,
@@ -217,13 +223,10 @@ function StaffRow({ member }: { member: StaffSelect }) {
     active: Boolean(member.active),
   });
 
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: trpc.staff.list.queryKey() });
-
   const updateStaff = useMutation(
     trpc.staff.update.mutationOptions({
       onSuccess: () => {
-        invalidate();
+        queryClient.invalidateQueries({ queryKey: trpc.staff.list.queryKey() });
         setIsEditing(false);
       },
     })
@@ -232,7 +235,7 @@ function StaffRow({ member }: { member: StaffSelect }) {
   const deleteStaff = useMutation(
     trpc.staff.delete.mutationOptions({
       onSuccess: () => {
-        invalidate();
+        queryClient.invalidateQueries({ queryKey: trpc.staff.list.queryKey() });
       },
     })
   );

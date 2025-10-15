@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { staff } from "@/db/schema";
-import { adminProcedure } from "@/integrations/trpc/init";
+import { adminProcedure } from "../init";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";

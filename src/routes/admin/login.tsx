@@ -1,4 +1,4 @@
-import { trpc } from "@/integrations/tanstack-query/root-provider";
+import { useTRPC } from "@/integrations/trpc/react";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -11,6 +11,8 @@ function RouteComponent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const trpc = useTRPC();
 
   const loginMutation = useMutation(
     trpc.auth.login.mutationOptions({

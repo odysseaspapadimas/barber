@@ -1,9 +1,9 @@
-import { authRouter } from "@/server/auth";
+import { authRouter } from "./routers/auth";
 import { createTRPCRouter } from "./init";
-import { servicesRouter } from "@/server/services";
-import { staffRouter } from "@/server/staff";
-import { schedulesRouter } from "@/server/schedules";
-import { bookingsRouter } from "@/server/bookings";
+import { servicesRouter } from "./routers/services";
+import { staffRouter } from "./routers/staff";
+import { schedulesRouter } from "./routers/schedules";
+import { bookingsRouter } from "./routers/bookings";
 
 export const trpcRouter = createTRPCRouter({
   services: servicesRouter,

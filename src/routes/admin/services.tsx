@@ -1,4 +1,5 @@
-import { queryClient, trpc } from "@/integrations/tanstack-query/root-provider";
+import { useQueryClient } from "@tanstack/react-query";
+import { useTRPC } from "@/integrations/trpc/react";
 import type { Service } from "@/lib/types";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -30,6 +31,7 @@ const currencyFormatter = new Intl.NumberFormat("en-IE", {
 });
 
 function ServicesList() {
+  const trpc = useTRPC();
   const { data: services } = useSuspenseQuery(
     trpc.services.list.queryOptions()
   );
@@ -56,6 +58,8 @@ function ServicesList() {
 }
 
 function CreateServiceForm() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     name: "",
     durationMin: "30",
@@ -195,6 +199,8 @@ function RouteComponent() {
 }
 
 function ServiceRow({ service }: { service: Service }) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     name: service.name,

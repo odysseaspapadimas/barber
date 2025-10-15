@@ -1,6 +1,6 @@
 import AdminHeader from "@/components/admin/AdminHeader";
 import { Pending } from "@/components/ui/pending";
-import { $getSession } from "@/server/functions";
+import { $getSession } from "../../integrations/trpc/routers/functions";
 import {
   createFileRoute,
   Outlet,

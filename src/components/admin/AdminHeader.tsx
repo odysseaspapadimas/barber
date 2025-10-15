@@ -1,12 +1,13 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
-import { trpc } from "@/integrations/tanstack-query/root-provider";
 import { useNavigate } from "@tanstack/react-router";
+import { useTRPC } from "@/integrations/trpc/react";
 
 const AdminHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const trpc = useTRPC();
   const logoutMutation = useMutation(
     trpc.auth.logout.mutationOptions({
       onSuccess: () => {

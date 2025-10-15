@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { staff_schedules } from "@/db/schema";
-import { adminProcedure, protectedProcedure } from "@/integrations/trpc/init";
+import { adminProcedure, protectedProcedure } from "../init";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 

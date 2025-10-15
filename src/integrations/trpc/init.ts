@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { user } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { auth } from "@/auth/server";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import superjson from "superjson";

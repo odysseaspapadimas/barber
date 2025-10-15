@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { bookings, services, staff, staff_schedules } from "@/db/schema";
-import { publicProcedure, protectedProcedure } from "@/integrations/trpc/init";
+import { publicProcedure, protectedProcedure } from "../init";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, eq, gte, lte, lt, gt } from "drizzle-orm";

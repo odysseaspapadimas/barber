@@ -1,4 +1,5 @@
-import { queryClient, trpc } from "@/integrations/tanstack-query/root-provider";
+import { useQueryClient } from "@tanstack/react-query";
+import { useTRPC } from "@/integrations/trpc/react";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Pending } from "@/components/ui/pending";
@@ -54,6 +55,7 @@ const scheduleSchema = z.object({
 });
 
 function RouteComponent() {
+  const trpc = useTRPC();
   const { data: schedules } = useSuspenseQuery(
     trpc.schedules.list.queryOptions()
   );
@@ -130,19 +132,19 @@ function ScheduleRow({
   schedule: any;
   staff: any;
 }) {
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: trpc.schedules.list.queryKey() });
-
-  const del = useMutation(
-    trpc.schedules.delete.mutationOptions({
-      onSuccess: () => invalidate(),
-    })
-  );
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
 
   async function handleDelete() {
     if (!confirm("Delete this schedule?")) return;
     await del.mutateAsync({ id: schedule.id });
   }
+
+  const del = useMutation(
+    trpc.schedules.delete.mutationOptions({
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: trpc.schedules.list.queryKey() }),
+    })
+  );
 
   return (
     <div className="border-2 border-border rounded-lg p-4 flex justify-between items-start hover:bg-accent/50 transition-colors">
@@ -179,6 +181,8 @@ function ScheduleRow({
 }
 
 function CreateScheduleDialog({ staffList }: { staffList: any[] }) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     staffId: 0,

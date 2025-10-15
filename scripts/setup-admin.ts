@@ -2,7 +2,7 @@
  * Setup script to create admin account with password
  * Run this once: pnpm tsx scripts/setup-admin.ts
  */
-import { auth } from '../src/lib/auth'
+import { auth } from '../src/auth/server'
 
 async function setupAdmin() {
   const adminPassword = process.env.ADMIN_PASSWORD || 'changeme'

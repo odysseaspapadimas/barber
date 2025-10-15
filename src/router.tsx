@@ -7,18 +7,21 @@ import { routeTree } from "./routeTree.gen";
 
 // Create a new router instance
 export const getRouter = () => {
-  const rqContext = {
-    trpc: TanstackQuery.trpc,
-    queryClient: TanstackQuery.queryClient,
-  };
+  const queryClient = TanstackQuery.createQueryClient();
+  const serverHelpers = TanstackQuery.createServerHelpers({
+    queryClient,
+  });
 
   const router = createRouter({
     routeTree,
-    context: { ...rqContext },
+    context: {
+      queryClient,
+      trpc: serverHelpers,
+    },
     defaultPreload: "intent",
     Wrap: (props: { children: React.ReactNode }) => {
       return (
-        <TanstackQuery.Provider {...rqContext}>
+        <TanstackQuery.Provider queryClient={queryClient}>
           {props.children}
         </TanstackQuery.Provider>
       );
@@ -27,7 +30,7 @@ export const getRouter = () => {
 
   setupRouterSsrQueryIntegration({
     router,
-    queryClient: rqContext.queryClient,
+    queryClient,
   });
 
   return router;

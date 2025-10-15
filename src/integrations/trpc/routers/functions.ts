@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
-import { authClient } from "@/lib/auth-client";
+import { auth } from "@/auth/server";
+import { authClient } from "@/auth/client";
 import { QueryClient } from "@tanstack/react-query";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";

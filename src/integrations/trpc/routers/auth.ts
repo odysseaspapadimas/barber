@@ -1,5 +1,5 @@
-import { protectedProcedure, publicProcedure } from "@/integrations/trpc/init";
-import { auth } from "@/lib/auth";
+import { protectedProcedure, publicProcedure } from "../init";
+import { auth } from "@/auth/server";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
