@@ -40,8 +40,6 @@ pnpm deploy
 2. **Mark user as admin**: Update `user.isAdmin = true` in D1 database via Drizzle Studio (`pnpm db:studio`) or SQL
 3. **Disable signup** (optional): Set `disableSignUp: true` in `src/auth/server.ts` after creating admin
 
-## Available Commands
-
 | Command | Description |
 |---------|-------------|
 | `pnpm dev` | Start Vite dev server with HMR (port 3000) |
@@ -172,19 +170,8 @@ Tables: `services`, `staff`, `staff_schedules`, `blackouts`, `customers`, `booki
 
 ### Cloudflare Workers
 
-1. **Configure Wrangler**: Edit `wrangler.json` (set `database_id`, `vars`)
-2. **Set secrets**: Add `ADMIN_PASSWORD`, `SESSION_SECRET` in Cloudflare dashboard or `.dev.vars`
-3. **Deploy**: `pnpm build && pnpm deploy`
-
-### Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `SESSION_SECRET` | 32+ char secret for session encryption | Yes |
-| `ADMIN_PASSWORD` | Initial admin password | Yes (dev only) |
-| `D1_DATABASE_ID` | Cloudflare D1 database ID | Yes (prod) |
-| `D1_ACCOUNT_ID` | Cloudflare account ID | Yes (prod) |
-| `D1_TOKEN` | Cloudflare API token | Yes (prod) |
+1. **Configure Wrangler**: Edit `wrangler.json` (set `database_id`)
+2. **Deploy**: `pnpm build && pnpm deploy`
 
 ## Development Workflow
 

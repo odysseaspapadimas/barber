@@ -222,7 +222,6 @@ Before submitting a PR or making changes:
 
 - **Local dev**: `pnpm dev` (uses `.dev.vars` for secrets, local D1 database)
 - **Production**: `pnpm build && pnpm deploy` (reads `wrangler.json`, uses remote D1)
-- **Environment vars**: `ADMIN_PASSWORD`, `SESSION_SECRET` in `wrangler.json` `vars` (dev) or Cloudflare dashboard (prod)
 
 ## Need Help?
 
