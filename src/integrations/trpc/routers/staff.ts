@@ -5,25 +5,13 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
+import { staffInsertSchema, staffSelectSchema } from "@/lib/types";
 
-const staffCreateSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Email must be valid"),
-  phone: z
-    .string()
-    .trim()
-    .min(6, "Phone number is too short")
-    .max(32, "Phone number is too long")
-    .optional()
-    .or(z.literal(""))
-    .transform((val) => (val === "" ? undefined : val)),
-  role: z
-    .string()
-    .trim()
-    .min(2, "Role must be at least 2 characters")
-    .max(50, "Role must be at most 50 characters")
-    .default("Stylist"),
-  active: z.boolean().default(true),
+const staffCreateSchema = staffInsertSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  userId: true,
 });
 
 const staffUpdateSchema = staffCreateSchema
@@ -79,7 +67,7 @@ export const staffRouter = {
   }),
 
   delete: adminProcedure
-    .input(z.object({ id: z.number().int().positive("Invalid staff id") }))
+    .input(staffSelectSchema.pick({ id: true }))
     .mutation(async ({ input }) => {
       const result = await db
         .delete(staff)

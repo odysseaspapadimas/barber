@@ -6,6 +6,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import { Suspense, useState } from "react";
 import { z } from "zod";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/staff")({
   loader: async ({ context }) => {
@@ -126,7 +127,7 @@ function CreateStaffForm() {
       await createStaff(parsed);
     } catch (err) {
       console.error(err);
-      alert("Failed to create staff member. Please verify the details.");
+      toast.error("Failed to create staff member. Please verify the details.");
     }
   }
 
@@ -254,7 +255,7 @@ function StaffRow({ member }: { member: StaffSelect }) {
       await updateStaff.mutateAsync({ id: member.id, ...parsed });
     } catch (err) {
       console.error(err);
-      alert("Unable to update staff member. Please verify the fields.");
+      toast.error("Unable to update staff member. Please verify the fields.");
     }
   }
 
@@ -267,7 +268,7 @@ function StaffRow({ member }: { member: StaffSelect }) {
       await deleteStaff.mutateAsync({ id: member.id });
     } catch (err) {
       console.error(err);
-      alert("Failed to delete staff member");
+      toast.error("Failed to delete staff member");
     }
   }
 

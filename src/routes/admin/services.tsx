@@ -7,6 +7,7 @@ import type { FormEvent } from "react";
 import { Suspense, useState } from "react";
 import { Pending } from "@/components/ui/pending";
 import { z } from "zod";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/services")({
   component: RouteComponent,
@@ -96,7 +97,7 @@ function CreateServiceForm() {
       });
     } catch (err) {
       console.error(err);
-      alert("Failed to create service. Please check your inputs.");
+      toast.error("Failed to create service. Please check your inputs.");
     }
   }
 
@@ -251,7 +252,7 @@ function ServiceRow({ service }: { service: Service }) {
       });
     } catch (err) {
       console.error(err);
-      alert("Unable to update service. Please review your changes.");
+      toast.error("Unable to update service. Please review your changes.");
     }
   }
 
@@ -264,7 +265,7 @@ function ServiceRow({ service }: { service: Service }) {
       await deleteService.mutateAsync({ id: service.id });
     } catch (err) {
       console.error(err);
-      alert("Failed to delete service");
+      toast.error("Failed to delete service");
     }
   }
 

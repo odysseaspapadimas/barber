@@ -3,15 +3,12 @@ import { staff_schedules } from "@/db/schema";
 import { adminProcedure, protectedProcedure } from "../init";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { staffSchedulesInsertSchema, staffSchedulesSelectSchema } from "@/lib/types";
 
 export const schedulesRouter = {
   list: protectedProcedure
     .input(
-      z
-        .object({
-          staffId: z.number().optional(),
-        })
-        .optional()
+      staffSchedulesSelectSchema.pick({ staffId: true }).optional()
     )
     .query(async ({ input }) => {
       const rows = input?.staffId
@@ -31,21 +28,13 @@ export const schedulesRouter = {
 
   create: adminProcedure
     .input(
-      z.object({
-        staffId: z.number(),
-        weekdays: z
-          .array(z.number().min(0).max(6))
-          .min(1, "Select at least one day"),
-        startMin: z
-          .number()
-          .min(0)
-          .max(24 * 60 - 1),
-        endMin: z
-          .number()
-          .min(1)
-          .max(24 * 60),
-        slotIntervalMin: z.number().min(1),
-      })
+      staffSchedulesInsertSchema
+        .omit({ id: true, createdAt: true, updatedAt: true })
+        .extend({
+          weekdays: z
+            .array(z.number().min(0).max(6))
+            .min(1, "Select at least one day"),
+        })
     )
     .mutation(async ({ input }) => {
       // Convert weekdays array to JSON string for storage
@@ -64,7 +53,7 @@ export const schedulesRouter = {
     }),
 
   delete: adminProcedure
-    .input(z.object({ id: z.number().int().positive() }))
+    .input(staffSchedulesSelectSchema.pick({ id: true }))
     .mutation(async ({ input }) => {
       const [row] = await db
         .delete(staff_schedules)

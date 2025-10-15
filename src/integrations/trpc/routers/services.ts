@@ -5,12 +5,12 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { servicesInsertSchema, servicesSelectSchema } from "@/lib/types";
 
-const serviceBaseSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  durationMin: z.number().int().positive("Duration must be positive"),
-  priceCents: z.number().int().min(0, "Price must be positive"),
-  active: z.boolean().default(true),
+const serviceBaseSchema = servicesInsertSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const servicesRouter = {
@@ -58,7 +58,7 @@ export const servicesRouter = {
       return row;
     }),
   remove: adminProcedure
-    .input(z.object({ id: z.number().int().positive() }))
+    .input(servicesSelectSchema.pick({ id: true }))
     .mutation(async ({ input }) => {
       const [row] = await db
         .delete(services)

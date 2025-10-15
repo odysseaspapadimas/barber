@@ -117,7 +117,35 @@ export const servicesRouter = {
 3. Run `pnpm db:migrate` to apply locally (or `wrangler deploy` applies in production)
 4. **Never** manually edit migration files; regenerate from schema
 
+## Development Guidelines
+
+### Build and Run Commands
+- **Do not run `pnpm dev` or `pnpm build` unless absolutely necessary** to check app integrity
+- Only build when you need to verify TypeScript compilation or test the complete application
+- Avoid running the development server during development unless specifically requested by the user
+- Focus on code changes and let the user handle running/testing the application
+
 ## Code Examples
+
+### Type-safe booking payloads (preferred)
+
+When sending booking payloads from the client to the server prefer using the schema-derived types and select only the fields you need. This keeps client code aligned with the DB schema and avoids duplicate type declarations.
+
+Example (preferred):
+
+```ts
+import type { BookingInsert } from "@/lib/types";
+
+type CreateBookingPayload = Pick<
+  BookingInsert,
+  "serviceId" | "startTs" | "staffId" | "customerName" | "customerContact"
+>;
+
+// then use CreateBookingPayload where you craft the mutation input
+```
+
+This pattern is recommended over re-declaring ad-hoc types like `{ startTs: number; staffId: number }` so any schema changes propagate into your client types automatically.
+
 
 ### Adding a New tRPC Router
 1. Create `src/integrations/trpc/routers/myrouter.ts`:

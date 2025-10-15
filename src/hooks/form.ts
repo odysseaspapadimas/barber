@@ -5,6 +5,10 @@ import {
   SubscribeButton,
   TextArea,
   TextField,
+  DateField,
+  ServiceField,
+  StaffField,
+  TimeField,
 } from '../components/FormComponents'
 import { fieldContext, formContext } from './form-context'
 
@@ -13,6 +17,10 @@ export const { useAppForm } = createFormHook({
     TextField,
     Select,
     TextArea,
+    DateField,
+    ServiceField,
+    StaffField,
+    TimeField,
   },
   formComponents: {
     SubscribeButton,

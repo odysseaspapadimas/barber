@@ -1,45 +1,92 @@
-import BookingForm from "@/components/BookingForm";
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, Suspense } from "react";
-import { useQuery, useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { Pending } from "@/components/ui/pending";
 import { useTRPC } from "@/integrations/trpc/react";
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { useStore } from "@tanstack/react-form";
+import { toast } from "sonner";
+import { useAppForm } from "@/hooks/form";
+import { bookingFormSchema } from "@/lib/types";
+import { z } from "zod";
+
+const searchSchema = z.object({
+  serviceId: z.number().optional(),
+});
 
 export const Route = createFileRoute("/book")({
+  validateSearch: searchSchema,
   component: RouteComponent,
   loader: async ({ context }) => {
-    await context.queryClient.prefetchQuery(
-      context.trpc.services.list.queryOptions()
-    );
+    await Promise.all([
+      context.queryClient.prefetchQuery(
+        context.trpc.services.list.queryOptions()
+      ),
+      context.queryClient.prefetchQuery(context.trpc.staff.list.queryOptions()),
+    ]);
   },
   pendingComponent: () => <Pending message="Loading booking flow…" />,
 });
 
-function formatTime(ms: number) {
-  const d = new Date(ms);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
 function RouteComponent() {
-  const [selectedService, setSelectedService] = useState<number | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().slice(0, 10)
-  );
-  const [chosenSlot, setChosenSlot] = useState<number | null>(null);
-
+  const { serviceId: selectedServiceIdFromUrl } = Route.useSearch();
   const trpc = useTRPC();
   const { data: services } = useSuspenseQuery(
     trpc.services.list.queryOptions()
   );
+  const { data: staff } = useSuspenseQuery(trpc.staff.list.queryOptions());
 
-  const availableBaseOptions = trpc.bookings.available.queryOptions({
-    dateTs: new Date(selectedDate + "T00:00:00Z").getTime(),
-    serviceId: selectedService ?? 0,
+  const form = useAppForm({
+    defaultValues: {
+      date: "",
+      serviceId: selectedServiceIdFromUrl || null as number | null,
+      staffId: null as number | null,
+      startTs: null as number | null,
+      customerName: "",
+      customerContact: "",
+    },
+    validators: {
+      onChange: bookingFormSchema,
+    },
+    onSubmit: async ({ value }) => {
+      try {
+        const payload = {
+          serviceId: value.serviceId!,
+          startTs: new Date(value.startTs!),
+          staffId: value.staffId!,
+          customerName: value.customerName,
+          customerContact: value.customerContact,
+        };
+        await createBooking.mutateAsync(payload);
+      } catch (err: any) {
+        toast.error(err?.message ?? "Failed to create booking");
+        await refetch();
+      }
+    },
   });
 
-  const { data: available, refetch } = useQuery({
-    ...availableBaseOptions,
-    enabled: !!selectedService,
+  const selectedDate = useStore(form.store, (state) => state.values.date);
+  const selectedServiceId = useStore(
+    form.store,
+    (state) => state.values.serviceId
+  );
+  const selectedStaffId = useStore(form.store, (state) => state.values.staffId);
+
+  const {
+    data: available,
+    refetch,
+    isLoading: isLoadingSlots,
+  } = useQuery({
+    ...trpc.bookings.available.queryOptions({
+      dateTs: selectedDate ? new Date(selectedDate + "T00:00:00Z").getTime() : 0,
+      serviceId: selectedServiceId ?? 0,
+      staffId: selectedStaffId ?? undefined,
+    }),
+    enabled: !!(
+      selectedDate &&
+      selectedServiceId &&
+      selectedStaffId &&
+      selectedServiceId > 0 &&
+      selectedStaffId > 0
+    ),
   });
 
   const createBooking = useMutation(
@@ -50,106 +97,75 @@ function RouteComponent() {
     })
   );
 
-  function handleSlotSelect(startTs: number) {
-    setChosenSlot(startTs);
-  }
-
-  async function handleSubmit(data: any) {
-    if (!selectedService || !chosenSlot)
-      return alert("Select a service and slot first");
-    try {
-      await createBooking.mutateAsync({
-        serviceId: selectedService,
-        startTs: chosenSlot,
-        customerName: data.name,
-        customerContact: data.phone,
-      });
-    } catch (err: any) {
-      alert(err?.message ?? "Failed to create booking");
-      await refetch();
-    }
-  }
-
   return (
     <main className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-4">Book a Service</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
-            <section className="bg-card border-2 border-border rounded-xl p-6 mb-6">
-              <label className="block text-sm font-semibold text-foreground mb-2">
-                Service
-              </label>
-              <select
-                className="w-full border-2 border-border rounded-lg p-3 bg-background text-foreground"
-                value={selectedService ?? ""}
-                onChange={(e) =>
-                  setSelectedService(Number(e.target.value) || null)
-                }
-              >
-                <option value="">Choose a service…</option>
-                {services.map((s: any) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} — {s.durationMin} min
-                  </option>
-                ))}
-              </select>
-            </section>
-
-            <section className="bg-card border-2 border-border rounded-xl p-6 mb-6">
-              <label className="block text-sm font-semibold text-foreground mb-2">
-                Date
-              </label>
-              <input
-                type="date"
-                className="w-full border-2 border-border rounded-lg p-3 bg-background text-foreground"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-              />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+          <div className="md:col-span-2 space-y-6">
+            <section className="bg-card border-2 border-border rounded-xl p-6">
+              <form.AppField name="date">
+                {(f) => <f.DateField label="Date" />}
+              </form.AppField>
             </section>
 
             <section className="bg-card border-2 border-border rounded-xl p-6">
-              <h3 className="font-bold mb-3">Available slots</h3>
-              {!selectedService ? (
-                <div className="text-muted-foreground">
-                  Please select a service to see slots.
-                </div>
-              ) : !available ? (
-                <div className="text-muted-foreground">Loading slots…</div>
-              ) : available.slots.length === 0 ? (
-                <div className="text-muted-foreground">
-                  No available slots for that day.
-                </div>
-              ) : (
-                <div className="flex gap-2 flex-wrap">
-                  {available.slots.map((slot: any) => (
-                    <button
-                      key={slot.startTs}
-                      onClick={() => handleSlotSelect(slot.startTs)}
-                      className={`px-4 py-2 rounded-lg ${
-                        chosenSlot === slot.startTs
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground"
-                      }`}
-                    >
-                      {formatTime(slot.startTs)} • Staff {slot.staffId}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <form.AppField name="serviceId">
+                {(f) => (
+                  <f.ServiceField
+                    label="Choose a Service"
+                    services={services}
+                  />
+                )}
+              </form.AppField>
+            </section>
+
+            <section className="bg-card border-2 border-border rounded-xl p-6">
+              <form.AppField name="staffId">
+                {(f) => <f.StaffField label="Choose a Staff" staff={staff} />}
+              </form.AppField>
+            </section>
+
+            <section className="bg-card border-2 border-border rounded-xl p-6">
+              <form.AppField name="startTs">
+                {(f) => (
+                  <f.TimeField
+                    label="Available times"
+                    availableSlots={available}
+                    isLoading={isLoadingSlots}
+                  />
+                )}
+              </form.AppField>
             </section>
           </div>
 
           <aside>
             <div className="bg-card border-2 border-border rounded-xl p-6">
-              <h3 className="font-bold mb-3">Confirm booking</h3>
-              <Suspense fallback={<Pending message="Loading form…" />}>
-                <BookingForm onSubmit={handleSubmit} />
-              </Suspense>
+              <h3 className="font-bold mb-3">Customer Details</h3>
+              <div className="space-y-4">
+                <form.AppField name="customerName">
+                  {(f) => <f.TextField label="Name" />}
+                </form.AppField>
+                <form.AppField name="customerContact">
+                  {(f) => <f.TextField label="Phone" />}
+                </form.AppField>
+
+                <div className="flex justify-end pt-4">
+                  <form.AppForm>
+                    <form.SubscribeButton label="Book" />
+                  </form.AppForm>
+                </div>
+              </div>
             </div>
           </aside>
-        </div>
+        </form>
       </div>
     </main>
   );
