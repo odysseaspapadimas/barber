@@ -1,11 +1,18 @@
 import { QueryClient } from "@tanstack/react-query";
-import superjson from "superjson";
-import { createTRPCClient, httpBatchStreamLink } from "@trpc/client";
+import {
+  createTRPCClient,
+  httpBatchLink,
+  httpBatchStreamLink,
+  splitLink,
+} from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+import superjson from "superjson";
 
 import type { TRPCRouter } from "@/integrations/trpc/router";
 
 import { TRPCProvider } from "@/integrations/trpc/react";
+import { createIsomorphicFn } from "@tanstack/react-start";
+import { getRequestHeaders } from "@tanstack/react-start/server";
 
 function getUrl() {
   const base = (() => {
@@ -15,11 +22,27 @@ function getUrl() {
   return `${base}/api/trpc`;
 }
 
+const headers = createIsomorphicFn()
+  .client(() => ({}))
+  .server(() => getRequestHeaders());
+
 export const trpcClient = createTRPCClient<TRPCRouter>({
   links: [
-    httpBatchStreamLink({
-      transformer: superjson,
-      url: getUrl(),
+    splitLink({
+      condition(op) {
+        // Route auth.* operations to the non-streaming httpBatchLink
+        return op.path.startsWith("auth.");
+      },
+      true: httpBatchLink({
+        transformer: superjson,
+        url: getUrl(),
+        headers,
+      }),
+      false: httpBatchStreamLink({
+        transformer: superjson,
+        url: getUrl(),
+        headers,
+      }),
     }),
   ],
 });
@@ -28,6 +51,10 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     dehydrate: { serializeData: superjson.serialize },
     hydrate: { deserializeData: superjson.deserialize },
+    queries: {
+      staleTime: 60_000,
+      
+    }
   },
 });
 

@@ -9,15 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as BookRouteImport } from './routes/book'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ConfirmBookingIdRouteImport } from './routes/confirm/$bookingId'
+import { Route as AdminStaffRouteImport } from './routes/admin/staff'
 import { Route as AdminSignupRouteImport } from './routes/admin/signup'
+import { Route as AdminServicesRouteImport } from './routes/admin/services'
+import { Route as AdminSchedulesRouteImport } from './routes/admin/schedules'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
+const BookRoute = BookRouteImport.update({
+  id: '/book',
+  path: '/book',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRouteRoute = AdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -38,9 +47,24 @@ const ConfirmBookingIdRoute = ConfirmBookingIdRouteImport.update({
   path: '/confirm/$bookingId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminStaffRoute = AdminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminSignupRoute = AdminSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminServicesRoute = AdminServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSchedulesRoute = AdminSchedulesRouteImport.update({
+  id: '/schedules',
+  path: '/schedules',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
@@ -62,8 +86,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
+  '/book': typeof BookRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/schedules': typeof AdminSchedulesRoute
+  '/admin/services': typeof AdminServicesRoute
   '/admin/signup': typeof AdminSignupRoute
+  '/admin/staff': typeof AdminStaffRoute
   '/confirm/$bookingId': typeof ConfirmBookingIdRoute
   '/admin/': typeof AdminIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -71,8 +99,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/book': typeof BookRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/schedules': typeof AdminSchedulesRoute
+  '/admin/services': typeof AdminServicesRoute
   '/admin/signup': typeof AdminSignupRoute
+  '/admin/staff': typeof AdminStaffRoute
   '/confirm/$bookingId': typeof ConfirmBookingIdRoute
   '/admin': typeof AdminIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -82,8 +114,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
+  '/book': typeof BookRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/schedules': typeof AdminSchedulesRoute
+  '/admin/services': typeof AdminServicesRoute
   '/admin/signup': typeof AdminSignupRoute
+  '/admin/staff': typeof AdminStaffRoute
   '/confirm/$bookingId': typeof ConfirmBookingIdRoute
   '/admin/': typeof AdminIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -94,8 +130,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/book'
     | '/admin/login'
+    | '/admin/schedules'
+    | '/admin/services'
     | '/admin/signup'
+    | '/admin/staff'
     | '/confirm/$bookingId'
     | '/admin/'
     | '/api/auth/$'
@@ -103,8 +143,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/book'
     | '/admin/login'
+    | '/admin/schedules'
+    | '/admin/services'
     | '/admin/signup'
+    | '/admin/staff'
     | '/confirm/$bookingId'
     | '/admin'
     | '/api/auth/$'
@@ -113,8 +157,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/book'
     | '/admin/login'
+    | '/admin/schedules'
+    | '/admin/services'
     | '/admin/signup'
+    | '/admin/staff'
     | '/confirm/$bookingId'
     | '/admin/'
     | '/api/auth/$'
@@ -124,6 +172,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  BookRoute: typeof BookRoute
   ConfirmBookingIdRoute: typeof ConfirmBookingIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
@@ -131,6 +180,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/book': {
+      id: '/book'
+      path: '/book'
+      fullPath: '/book'
+      preLoaderRoute: typeof BookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -159,11 +215,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfirmBookingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/staff': {
+      id: '/admin/staff'
+      path: '/staff'
+      fullPath: '/admin/staff'
+      preLoaderRoute: typeof AdminStaffRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/signup': {
       id: '/admin/signup'
       path: '/signup'
       fullPath: '/admin/signup'
       preLoaderRoute: typeof AdminSignupRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/services': {
+      id: '/admin/services'
+      path: '/services'
+      fullPath: '/admin/services'
+      preLoaderRoute: typeof AdminServicesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/schedules': {
+      id: '/admin/schedules'
+      path: '/schedules'
+      fullPath: '/admin/schedules'
+      preLoaderRoute: typeof AdminSchedulesRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/login': {
@@ -192,13 +269,19 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminSchedulesRoute: typeof AdminSchedulesRoute
+  AdminServicesRoute: typeof AdminServicesRoute
   AdminSignupRoute: typeof AdminSignupRoute
+  AdminStaffRoute: typeof AdminStaffRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
+  AdminSchedulesRoute: AdminSchedulesRoute,
+  AdminServicesRoute: AdminServicesRoute,
   AdminSignupRoute: AdminSignupRoute,
+  AdminStaffRoute: AdminStaffRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -209,6 +292,7 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
+  BookRoute: BookRoute,
   ConfirmBookingIdRoute: ConfirmBookingIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,

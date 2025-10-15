@@ -10,10 +10,20 @@ export const Route = createFileRoute("/admin/login")({
 function RouteComponent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
   const navigate = useNavigate();
 
-  const loginMutation = useMutation(trpc.auth.login.mutationOptions());
+  const loginMutation = useMutation(
+    trpc.auth.login.mutationOptions({
+      onSuccess: () => {
+        // Cookie is set automatically by Better Auth's reactStartCookies plugin
+        navigate({ to: "/admin" });
+      },
+      onError: (err) => {
+        console.error("Login error:", err);
+        setError(err.message || "Invalid credentials");
+      },
+    })
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,23 +34,10 @@ function RouteComponent() {
       return;
     }
 
-    setIsPending(true);
-
-    try {
-      // Better Auth automatically handles cookies!
-      const res = await loginMutation.mutateAsync({
-        email: "admin@kypseli.com",
-        password,
-      });
-      console.log(res);
-      // Cookie is set automatically, redirect to admin
-      navigate({ to: "/admin" });
-    } catch (err: any) {
-      console.error("Login error:", err);
-      setError(err.message || "Invalid credentials");
-    } finally {
-      setIsPending(false);
-    }
+    loginMutation.mutate({
+      email: "admin@kypseli.com",
+      password,
+    });
   }
 
   return (
@@ -64,7 +61,7 @@ function RouteComponent() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={isPending}
+              disabled={loginMutation.isPending}
               className="block w-full border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed"
               placeholder="Enter admin password"
               autoComplete="current-password"
@@ -79,10 +76,10 @@ function RouteComponent() {
 
           <button
             type="submit"
-            disabled={isPending}
+            disabled={loginMutation.isPending}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg px-4 py-2.5 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            {isPending ? (
+            {loginMutation.isPending ? (
               <>
                 <svg
                   className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"

@@ -29,6 +29,41 @@
       "when": 1760025559797,
       "tag": "0003_dapper_silk_fever",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1760042056038,
+      "tag": "0004_ancient_ogun",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1760084457723,
+      "tag": "0005_burly_proteus",
+      "breakpoints": true
+    },
+    {
+       "idx": 6,
+      "version": "6",
+      "when": 1760088958526,
+      "tag": "0006_aspiring_brother_voodoo",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1760387226322,
+      "tag": "0007_condemned_lord_hawal",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1760389018192,
+      "tag": "0008_aspiring_the_hood",
+      "breakpoints": true
     }
   ]
 }

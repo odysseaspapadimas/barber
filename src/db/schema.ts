@@ -2,7 +2,8 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 // prefer integer ms timestamps for easy arithmetic in JS
-const nowMs = sql`(strftime('%s','now') * 1000)`;
+// Use the same unixepoch(subsecond) expression as the user/account tables
+const nowMs = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
 
 export const services = sqliteTable("services", {
   id: integer("id").primaryKey().notNull(),
@@ -13,40 +14,60 @@ export const services = sqliteTable("services", {
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   // timestamp_ms mode: TS shows number (ms), DB stores integer ms
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .notNull()
-    .default(nowMs),
+    .default(nowMs)
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(nowMs)
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
 });
 
 export const staff = sqliteTable("staff", {
   id: integer("id").primaryKey().notNull(),
-  name: text("name").notNull(),
+  name: text("name").notNull().default(""),
+  email: text("email").notNull().default(""),
+  phone: text("phone"),
+  role: text("role").notNull().default("stylist"),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .notNull()
-    .default(nowMs),
+    .default(nowMs)
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(nowMs)
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
 });
 
 export const staff_schedules = sqliteTable("staff_schedules", {
   id: integer("id").primaryKey().notNull(),
-  staffId: integer("staff_id").notNull(),
-  weekday: integer("weekday").notNull(), // 0 = Sunday .. 6 = Saturday
+  staffId: integer("staff_id").notNull().references(() => staff.id, { onDelete: "cascade" }),
+  weekdays: text("weekdays").notNull().default("[]"), // JSON array of weekday numbers: "[1,2,3,4,5]" for Mon-Fri
   startMin: integer("start_min").notNull(),
   endMin: integer("end_min").notNull(),
   slotIntervalMin: integer("slot_interval_min").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .notNull()
-    .default(nowMs),
+    .default(nowMs)
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(nowMs)
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
 });
 
 export const blackouts = sqliteTable("blackouts", {
   id: integer("id").primaryKey().notNull(),
-  staffId: integer("staff_id"), // nullable = global blackout when null
+  staffId: integer("staff_id").references(() => staff.id), // nullable = global blackout when null
   startTs: integer("start_ts", { mode: "timestamp_ms" }).notNull(),
   endTs: integer("end_ts", { mode: "timestamp_ms" }).notNull(),
   reason: text("reason"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .notNull()
-    .default(nowMs),
+    .default(nowMs)
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(nowMs)
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
 });
 
 export const customers = sqliteTable("customers", {
@@ -55,26 +76,36 @@ export const customers = sqliteTable("customers", {
   email: text("email"),
   phone: text("phone").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .notNull()
-    .default(nowMs),
+    .default(nowMs)
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(nowMs)
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
 });
 
 export const bookings = sqliteTable("bookings", {
   id: integer("id").primaryKey().notNull(),
-  customerId: integer("customer_id").notNull(),
-  serviceId: integer("service_id").notNull(),
-  staffId: integer("staff_id").notNull(),
+  // Which service was booked
+  serviceId: integer("service_id").notNull().references(() => services.id),
+  // Nullable: when omitted the server will auto-assign an available staff
+  staffId: integer("staff_id").references(() => staff.id),
+  // start / end timestamps in ms since epoch
   startTs: integer("start_ts", { mode: "timestamp_ms" }).notNull(),
   endTs: integer("end_ts", { mode: "timestamp_ms" }).notNull(),
+  // Guest info (bookings are created without requiring a customer account)
+  customerName: text("customer_name").notNull(),
+  customerContact: text("customer_contact"),
+  // booking lifecycle
   status: text("status").notNull().default("confirmed"),
-  paymentStatus: text("payment_status").notNull().default("pending"),
   notes: text("notes"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .notNull()
-    .default(nowMs),
+    .default(nowMs)
+    .notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-    .notNull()
-    .default(nowMs),
+    .default(nowMs)
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
 });
 
 export const user = sqliteTable("user", {
@@ -85,11 +116,12 @@ export const user = sqliteTable("user", {
     .default(false)
     .notNull(),
   image: text("image"),
+  isAdmin: integer("is_admin", { mode: "boolean" }).default(false).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .default(nowMs)
     .notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .default(nowMs)
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
@@ -99,9 +131,10 @@ export const session = sqliteTable("session", {
   expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
   token: text("token").notNull().unique(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .default(nowMs)
     .notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(nowMs)
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   ipAddress: text("ip_address"),
@@ -130,7 +163,7 @@ export const account = sqliteTable("account", {
   scope: text("scope"),
   password: text("password"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .default(nowMs)
     .notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .$onUpdate(() => /* @__PURE__ */ new Date())
@@ -143,10 +176,10 @@ export const verification = sqliteTable("verification", {
   value: text("value").notNull(),
   expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .default(nowMs)
     .notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .default(nowMs)
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
