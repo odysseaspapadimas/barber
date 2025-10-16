@@ -19,13 +19,8 @@ import { getRequestHeaders } from "@tanstack/react-start/server";
 function getUrl() {
   const base = (() => {
     if (typeof window !== "undefined") return "";
-    if (process.env.NODE_ENV === 'production') {
-      return 'http://127.0.0.1:8787';
-    } else if (process.env.NODE_ENV === 'development') {
-      return 'http://localhost:3000';
-    } else {
-      return 'http://localhost:8787';
-    }
+    // Server-side: use relative URL for Cloudflare Workers
+    return "";
   })();
   return `${base}/api/trpc`;
 }
