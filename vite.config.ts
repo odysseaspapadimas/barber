@@ -6,6 +6,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
 
 const config = defineConfig({
+  server: {
+    port: 3000,
+  },
   plugins: [
     tanstackStart(),
     cloudflare({ viteEnvironment: { name: "ssr" } }),

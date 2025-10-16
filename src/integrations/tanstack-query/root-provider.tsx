@@ -20,7 +20,8 @@ function getUrl() {
   const base = (() => {
     if (typeof window !== "undefined") return "";
     // Server-side: use relative URL for Cloudflare Workers
-    return "";
+    if (import.meta.env.BASE_URL) return import.meta.env.BASE_URL;
+    return `http://localhost:${process.env.PORT ?? 3000}`;
   })();
   return `${base}/api/trpc`;
 }
