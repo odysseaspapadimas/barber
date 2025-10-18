@@ -22,18 +22,23 @@ function getUrl() {
     return "/api/trpc";
   }
   
-  // Server-side: use relative URL in production/Workers, absolute in local dev
-  // In Cloudflare Workers, relative URLs work for internal fetch
-  // In local dev with Vite, we need absolute localhost URL
-  const isDev = process.env.NODE_ENV === "development";
-  
-  if (isDev) {
-    // Local development: Vite dev server on port 3000
-    return "http://localhost:3000/api/trpc";
+  // Server-side: use the incoming request's host to construct URL
+  // This works in both local dev and production
+  try {
+    const headers = getRequestHeaders();
+    const host = headers.get("host");
+    
+    if (host) {
+      const protocol = headers.get("x-forwarded-proto") || 
+                      (host.includes("localhost") ? "http" : "https");
+      return `${protocol}://${host}/api/trpc`;
+    }
+  } catch (e) {
+    // Ignore errors
   }
   
-  // Production/Cloudflare Workers: use relative URL for same-worker routing
-  return "/api/trpc";
+  // Fallback for local dev
+  return "http://localhost:3000/api/trpc";
 }
 
 const headers = createIsomorphicFn()
