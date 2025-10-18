@@ -17,12 +17,9 @@ import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 
 function getUrl() {
-  const base = (() => {
-    if (typeof window !== "undefined") return "";
-    // Server-side: use relative URL for Cloudflare Workers
-    return `http://localhost:${process.env.PORT ?? 3000}`;
-  })();
-  return `${base}/api/trpc`;
+  // Both client and server use relative URLs in Cloudflare Workers
+  // The server runtime doesn't have a separate localhost to connect to
+  return "/api/trpc";
 }
 
 const headers = createIsomorphicFn()
