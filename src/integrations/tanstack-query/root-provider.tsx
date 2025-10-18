@@ -18,16 +18,22 @@ import { getRequestHeaders } from "@tanstack/react-start/server";
 
 function getUrl() {
   if (typeof window !== "undefined") {
-    // Client-side: use relative URL
+    // Client-side: always use relative URL
     return "/api/trpc";
   }
   
-  // Server-side: construct full URL from request headers
-  const headers = getRequestHeaders();
-  const host = headers.get("host") || "localhost:3000";
-  const protocol = headers.get("x-forwarded-proto") || "http";
+  // Server-side: use relative URL in production/Workers, absolute in local dev
+  // In Cloudflare Workers, relative URLs work for internal fetch
+  // In local dev with Vite, we need absolute localhost URL
+  const isDev = process.env.NODE_ENV === "development";
   
-  return `${protocol}://${host}/api/trpc`;
+  if (isDev) {
+    // Local development: Vite dev server on port 3000
+    return "http://localhost:3000/api/trpc";
+  }
+  
+  // Production/Cloudflare Workers: use relative URL for same-worker routing
+  return "/api/trpc";
 }
 
 const headers = createIsomorphicFn()
