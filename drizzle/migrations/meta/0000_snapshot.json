@@ -1,11 +1,11 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4849db9d-92f8-47fd-b714-6eb6f462f12f",
+  "id": "bb36c98e-df7e-438a-841f-11a866e91e9b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "barber_account": {
-      "name": "barber_account",
+    "projects_account": {
+      "name": "projects_account",
       "columns": {
         "id": {
           "name": "id",
@@ -102,10 +102,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "barber_account_user_id_barber_user_id_fk": {
-          "name": "barber_account_user_id_barber_user_id_fk",
-          "tableFrom": "barber_account",
-          "tableTo": "barber_user",
+        "projects_account_user_id_projects_user_id_fk": {
+          "name": "projects_account_user_id_projects_user_id_fk",
+          "tableFrom": "projects_account",
+          "tableTo": "projects_user",
           "columnsFrom": [
             "user_id"
           ],
@@ -120,8 +120,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "barber_blackouts": {
-      "name": "barber_blackouts",
+    "projects_blackouts": {
+      "name": "projects_blackouts",
       "columns": {
         "id": {
           "name": "id",
@@ -177,10 +177,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "barber_blackouts_staff_id_barber_staff_id_fk": {
-          "name": "barber_blackouts_staff_id_barber_staff_id_fk",
-          "tableFrom": "barber_blackouts",
-          "tableTo": "barber_staff",
+        "projects_blackouts_staff_id_projects_staff_id_fk": {
+          "name": "projects_blackouts_staff_id_projects_staff_id_fk",
+          "tableFrom": "projects_blackouts",
+          "tableTo": "projects_staff",
           "columnsFrom": [
             "staff_id"
           ],
@@ -195,8 +195,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "barber_bookings": {
-      "name": "barber_bookings",
+    "projects_bookings": {
+      "name": "projects_bookings",
       "columns": {
         "id": {
           "name": "id",
@@ -281,10 +281,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "barber_bookings_service_id_barber_services_id_fk": {
-          "name": "barber_bookings_service_id_barber_services_id_fk",
-          "tableFrom": "barber_bookings",
-          "tableTo": "barber_services",
+        "projects_bookings_service_id_projects_services_id_fk": {
+          "name": "projects_bookings_service_id_projects_services_id_fk",
+          "tableFrom": "projects_bookings",
+          "tableTo": "projects_services",
           "columnsFrom": [
             "service_id"
           ],
@@ -294,10 +294,10 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "barber_bookings_staff_id_barber_staff_id_fk": {
-          "name": "barber_bookings_staff_id_barber_staff_id_fk",
-          "tableFrom": "barber_bookings",
-          "tableTo": "barber_staff",
+        "projects_bookings_staff_id_projects_staff_id_fk": {
+          "name": "projects_bookings_staff_id_projects_staff_id_fk",
+          "tableFrom": "projects_bookings",
+          "tableTo": "projects_staff",
           "columnsFrom": [
             "staff_id"
           ],
@@ -312,8 +312,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "barber_customers": {
-      "name": "barber_customers",
+    "projects_customers": {
+      "name": "projects_customers",
       "columns": {
         "id": {
           "name": "id",
@@ -366,8 +366,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "barber_services": {
-      "name": "barber_services",
+    "projects_services": {
+      "name": "projects_services",
       "columns": {
         "id": {
           "name": "id",
@@ -428,8 +428,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "barber_session": {
-      "name": "barber_session",
+    "projects_session": {
+      "name": "projects_session",
       "columns": {
         "id": {
           "name": "id",
@@ -491,8 +491,8 @@
         }
       },
       "indexes": {
-        "barber_session_token_unique": {
-          "name": "barber_session_token_unique",
+        "projects_session_token_unique": {
+          "name": "projects_session_token_unique",
           "columns": [
             "token"
           ],
@@ -500,10 +500,10 @@
         }
       },
       "foreignKeys": {
-        "barber_session_user_id_barber_user_id_fk": {
-          "name": "barber_session_user_id_barber_user_id_fk",
-          "tableFrom": "barber_session",
-          "tableTo": "barber_user",
+        "projects_session_user_id_projects_user_id_fk": {
+          "name": "projects_session_user_id_projects_user_id_fk",
+          "tableFrom": "projects_session",
+          "tableTo": "projects_user",
           "columnsFrom": [
             "user_id"
           ],
@@ -518,8 +518,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "barber_staff": {
-      "name": "barber_staff",
+    "projects_staff": {
+      "name": "projects_staff",
       "columns": {
         "id": {
           "name": "id",
@@ -593,10 +593,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "barber_staff_user_id_barber_user_id_fk": {
-          "name": "barber_staff_user_id_barber_user_id_fk",
-          "tableFrom": "barber_staff",
-          "tableTo": "barber_user",
+        "projects_staff_user_id_projects_user_id_fk": {
+          "name": "projects_staff_user_id_projects_user_id_fk",
+          "tableFrom": "projects_staff",
+          "tableTo": "projects_user",
           "columnsFrom": [
             "user_id"
           ],
@@ -611,8 +611,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "barber_staff_schedules": {
-      "name": "barber_staff_schedules",
+    "projects_staff_schedules": {
+      "name": "projects_staff_schedules",
       "columns": {
         "id": {
           "name": "id",
@@ -676,10 +676,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "barber_staff_schedules_staff_id_barber_staff_id_fk": {
-          "name": "barber_staff_schedules_staff_id_barber_staff_id_fk",
-          "tableFrom": "barber_staff_schedules",
-          "tableTo": "barber_staff",
+        "projects_staff_schedules_staff_id_projects_staff_id_fk": {
+          "name": "projects_staff_schedules_staff_id_projects_staff_id_fk",
+          "tableFrom": "projects_staff_schedules",
+          "tableTo": "projects_staff",
           "columnsFrom": [
             "staff_id"
           ],
@@ -694,8 +694,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "barber_user": {
-      "name": "barber_user",
+    "projects_user": {
+      "name": "projects_user",
       "columns": {
         "id": {
           "name": "id",
@@ -759,8 +759,8 @@
         }
       },
       "indexes": {
-        "barber_user_email_unique": {
-          "name": "barber_user_email_unique",
+        "projects_user_email_unique": {
+          "name": "projects_user_email_unique",
           "columns": [
             "email"
           ],
@@ -772,8 +772,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "barber_verification": {
-      "name": "barber_verification",
+    "projects_verification": {
+      "name": "projects_verification",
       "columns": {
         "id": {
           "name": "id",

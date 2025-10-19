@@ -8,7 +8,7 @@
     {
       "binding": "projects",
       "database_name": "projects",
-      "database_id": "4a98c70b-5d28-4793-8117-c4e09f6324ed",
+      "database_id": "81ab63da-fc8c-4481-929e-0853c849b2ec",
       "migrations_dir": "drizzle/migrations",
       "remote": true
     }
