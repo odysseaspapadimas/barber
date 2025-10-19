@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { TimeInput, formatMinutesToTime } from "@/components/ui/time-input";
 import { WeekdaySelector, formatWeekdays } from "@/components/ui/weekday-selector";
 import { PlusIcon, Trash2Icon, ClockIcon, CalendarIcon, EditIcon } from "lucide-react";
+import { RouterOutput } from "@/lib/types";
 
 export const Route = createFileRoute("/admin/schedules")({
   component: RouteComponent,
@@ -64,13 +65,13 @@ function RouteComponent() {
   const { data: staffList } = useSuspenseQuery(trpc.staff.list.queryOptions());
 
   // Group schedules by staff
-  const schedulesByStaff = schedules.reduce((acc: any, schedule: any) => {
+  const schedulesByStaff = schedules.reduce((acc: Record<number, RouterOutput["schedules"]["list"]>, schedule) => {
     if (!acc[schedule.staffId]) {
       acc[schedule.staffId] = [];
     }
     acc[schedule.staffId].push(schedule);
     return acc;
-  }, {});
+  }, {} as Record<number, RouterOutput["schedules"]["list"]>);
 
   return (
     <>
@@ -94,7 +95,7 @@ function RouteComponent() {
             </CardContent>
           </Card>
         ) : (
-          staffList?.map((staff: any) => (
+          staffList?.map((staff: RouterOutput["staff"]["list"][number]) => (
             <Card key={staff.id}>
               <CardHeader>
                 <CardTitle>{staff.name}</CardTitle>
@@ -105,11 +106,10 @@ function RouteComponent() {
               <CardContent>
                 {schedulesByStaff[staff.id]?.length > 0 ? (
                   <div className="space-y-3">
-                    {schedulesByStaff[staff.id].map((schedule: any) => (
+                    {schedulesByStaff[staff.id].map((schedule) => (
                       <ScheduleRow
                         key={schedule.id}
                         schedule={schedule}
-                        staff={staff}
                       />
                     ))}
                   </div>
@@ -130,8 +130,7 @@ function RouteComponent() {
 function ScheduleRow({
   schedule,
 }: {
-  schedule: any;
-  staff: any;
+  schedule: RouterOutput["schedules"]["list"][number];
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -190,7 +189,7 @@ function ScheduleRow({
   );
 }
 
-function CreateScheduleDialog({ staffList }: { staffList: any[] }) {
+function CreateScheduleDialog({ staffList }: { staffList: RouterOutput["staff"]["list"] }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -352,7 +351,7 @@ function CreateScheduleDialog({ staffList }: { staffList: any[] }) {
   );
 }
 
-function EditScheduleDialog({ schedule }: { schedule: any }) {
+function EditScheduleDialog({ schedule }: { schedule: RouterOutput["schedules"]["list"][number] }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);

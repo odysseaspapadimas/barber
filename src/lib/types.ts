@@ -1,3 +1,4 @@
+import { inferRouterOutputs } from "@trpc/server";
 import {
   services,
   staff,
@@ -8,6 +9,7 @@ import {
 } from "../db/schema";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { TRPCRouter } from "@/integrations/trpc/router";
 
 export type Service = typeof services.$inferSelect;
 export type ServiceInsert = typeof services.$inferInsert;
@@ -76,3 +78,5 @@ export const bookingFormSchema = bookingsInsertSchema
       message: "Time is required",
     }),
   });
+
+  export type RouterOutput = inferRouterOutputs<TRPCRouter>;

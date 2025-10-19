@@ -22,26 +22,62 @@ export const bookingsRouter = {
     )
     .query(async ({ input }) => {
       // Build explicit branches to satisfy drizzle types
-      if (!input) return await db.select().from(bookings).all();
+      let bookingRows: any[];
+      if (!input) {
+        bookingRows = await db.select().from(bookings).all();
+      } else {
+        const conditions: any[] = [];
+        if (input.fromTs)
+          conditions.push(gte(bookings.startTs, new Date(input.fromTs)));
+        if (input.toTs)
+          conditions.push(lte(bookings.startTs, new Date(input.toTs)));
+        if (input.staffId) conditions.push(eq(bookings.staffId, input.staffId));
+        if (input.serviceId)
+          conditions.push(eq(bookings.serviceId, input.serviceId));
 
-      const conditions: any[] = [];
-      if (input.fromTs)
-        conditions.push(gte(bookings.startTs, new Date(input.fromTs)));
-      if (input.toTs)
-        conditions.push(lte(bookings.startTs, new Date(input.toTs)));
-      if (input.staffId) conditions.push(eq(bookings.staffId, input.staffId));
-      if (input.serviceId)
-        conditions.push(eq(bookings.serviceId, input.serviceId));
+        if (conditions.length === 0) {
+          bookingRows = await db.select().from(bookings).all();
+        } else if (conditions.length === 1) {
+          bookingRows = await db.select().from(bookings).where(conditions[0]).all();
+        } else {
+          bookingRows = await db
+            .select()
+            .from(bookings)
+            .where(and(...conditions))
+            .all();
+        }
+      }
 
-      if (conditions.length === 0)
-        return await db.select().from(bookings).all();
-      if (conditions.length === 1)
-        return await db.select().from(bookings).where(conditions[0]).all();
-      return await db
-        .select()
-        .from(bookings)
-        .where(and(...conditions))
-        .all();
+      // Fetch related service and staff data for each booking
+      const bookingsWithDetails = await Promise.all(
+        bookingRows.map(async (booking) => {
+          // Fetch service data
+          const [serviceData] = await db
+            .select()
+            .from(services)
+            .where(eq(services.id, booking.serviceId))
+            .all();
+
+          // Fetch staff data if staffId exists
+          let staffData = null;
+          if (booking.staffId) {
+            const [staffRow] = await db
+              .select()
+              .from(staff)
+              .where(eq(staff.id, booking.staffId))
+              .all();
+            staffData = staffRow;
+          }
+
+          return {
+            ...booking,
+            service: serviceData,
+            staff: staffData,
+          };
+        })
+      );
+
+      return bookingsWithDetails;
     }),
 
   get: publicProcedure
@@ -287,5 +323,37 @@ export const bookingsRouter = {
 
       const [row] = await db.insert(bookings).values(values).returning();
       return { id: row.id } as const;
+    }),
+
+  // Cancel a booking (admin only)
+  cancel: protectedProcedure
+    .input(bookingsSelectSchema.pick({ id: true }))
+    .mutation(async ({ input }) => {
+      const [existing] = await db
+        .select()
+        .from(bookings)
+        .where(eq(bookings.id, input.id))
+        .all();
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "BOOKING_NOT_FOUND",
+        });
+      }
+
+      if (existing.status === "cancelled") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "BOOKING_ALREADY_CANCELLED",
+        });
+      }
+
+      await db
+        .update(bookings)
+        .set({ status: "cancelled" })
+        .where(eq(bookings.id, input.id));
+
+      return { success: true };
     }),
 } satisfies TRPCRouterRecord;
