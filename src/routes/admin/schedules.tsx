@@ -5,6 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Pending } from "@/components/ui/pending";
 import { useState } from "react";
 import { z } from "zod";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { TimeInput, formatMinutesToTime } from "@/components/ui/time-input";
 import { WeekdaySelector, formatWeekdays } from "@/components/ui/weekday-selector";
-import { PlusIcon, Trash2Icon, ClockIcon, CalendarIcon } from "lucide-react";
+import { PlusIcon, Trash2Icon, ClockIcon, CalendarIcon, EditIcon } from "lucide-react";
 
 export const Route = createFileRoute("/admin/schedules")({
   component: RouteComponent,
@@ -142,7 +143,13 @@ function ScheduleRow({
 
   const del = useMutation(
     trpc.schedules.delete.mutationOptions({
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: trpc.schedules.list.queryKey() }),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.schedules.list.queryKey() });
+        toast.success("Schedule deleted successfully");
+      },
+      onError: () => {
+        toast.error("Failed to delete schedule");
+      },
     })
   );
 
@@ -167,15 +174,18 @@ function ScheduleRow({
           </div>
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleDelete}
-        disabled={del.isPending}
-        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-      >
-        <Trash2Icon className="w-4 h-4" />
-      </Button>
+      <div className="flex gap-2">
+        <EditScheduleDialog schedule={schedule} />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDelete}
+          disabled={del.isPending}
+          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
+          <Trash2Icon className="w-4 h-4" />
+        </Button>
+      </div>
     </div>
   );
 }
@@ -208,9 +218,11 @@ function CreateScheduleDialog({ staffList }: { staffList: any[] }) {
           slotIntervalMin: 30,
         });
         setError("");
+        toast.success("Schedule created successfully");
       },
       onError: (err) => {
         setError(err.message || "Failed to create schedule");
+        toast.error("Failed to create schedule. Please check your inputs.");
       },
     })
   );
@@ -332,6 +344,146 @@ function CreateScheduleDialog({ staffList }: { staffList: any[] }) {
             </Button>
             <Button type="submit" disabled={create.isPending}>
               {create.isPending ? "Creating..." : "Create Schedule"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditScheduleDialog({ schedule }: { schedule: any }) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    staffId: schedule.staffId,
+    weekdays: schedule.weekdays,
+    startMin: schedule.startMin,
+    endMin: schedule.endMin,
+    slotIntervalMin: schedule.slotIntervalMin,
+  });
+  const [error, setError] = useState("");
+
+  const update = useMutation(
+    trpc.schedules.update.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.schedules.list.queryKey(),
+        });
+        setOpen(false);
+        setError("");
+        toast.success("Schedule updated successfully");
+      },
+      onError: (err) => {
+        setError(err.message || "Failed to update schedule");
+        toast.error("Failed to update schedule. Please check your inputs.");
+      },
+    })
+  );
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    
+    try {
+      const parsed = scheduleSchema.parse(form);
+      
+      if (parsed.startMin >= parsed.endMin) {
+        setError("End time must be after start time");
+        return;
+      }
+      
+      await update.mutateAsync({
+        id: schedule.id,
+        staffId: parsed.staffId,
+        weekdays: parsed.weekdays,
+        startMin: parsed.startMin,
+        endMin: parsed.endMin,
+        slotIntervalMin: parsed.slotIntervalMin,
+      });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        setError(err.issues[0]?.message || "Invalid schedule data");
+      } else {
+        setError("Failed to update schedule");
+      }
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <EditIcon className="w-4 h-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Edit Schedule</DialogTitle>
+            <DialogDescription>
+              Update the recurring weekly schedule
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-6">
+            <WeekdaySelector
+              value={form.weekdays}
+              onChange={(weekdays) => setForm((p) => ({ ...p, weekdays }))}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <TimeInput
+                label="Start Time"
+                value={form.startMin}
+                onChange={(startMin) => setForm((p) => ({ ...p, startMin }))}
+              />
+              <TimeInput
+                label="End Time"
+                value={form.endMin}
+                onChange={(endMin) => setForm((p) => ({ ...p, endMin }))}
+              />
+            </div>
+
+            <div>
+              <Label className="block text-sm font-semibold mb-2">
+                Appointment Slot Duration
+              </Label>
+              <select
+                value={form.slotIntervalMin}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    slotIntervalMin: Number(e.target.value),
+                  }))
+                }
+                className="w-full p-2 border-2 border-border rounded-lg bg-background"
+              >
+                <option value={15}>15 minutes</option>
+                <option value={30}>30 minutes</option>
+                <option value={45}>45 minutes</option>
+                <option value={60}>60 minutes</option>
+              </select>
+            </div>
+
+            {error && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+                {error}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={update.isPending}>
+              {update.isPending ? "Updating..." : "Update Schedule"}
             </Button>
           </DialogFooter>
         </form>

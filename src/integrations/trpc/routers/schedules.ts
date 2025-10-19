@@ -62,4 +62,36 @@ export const schedulesRouter = {
       if (!row) return { ok: false };
       return { ok: true };
     }),
+
+  update: adminProcedure
+    .input(
+      staffSchedulesInsertSchema
+        .omit({ createdAt: true, updatedAt: true })
+        .extend({
+          id: z.number().int().positive(),
+          weekdays: z
+            .array(z.number().min(0).max(6))
+            .min(1, "Select at least one day"),
+        })
+    )
+    .mutation(async ({ input }) => {
+      const { id, ...updateData } = input;
+      // Convert weekdays array to JSON string for storage
+      const [row] = await db
+        .update(staff_schedules)
+        .set({
+          ...updateData,
+          weekdays: JSON.stringify(input.weekdays),
+          updatedAt: new Date(),
+        })
+        .where(eq(staff_schedules.id, id))
+        .returning();
+
+      if (!row) throw new Error("Schedule not found");
+
+      return {
+        ...row,
+        weekdays: JSON.parse(row.weekdays) as number[],
+      };
+    }),
 };

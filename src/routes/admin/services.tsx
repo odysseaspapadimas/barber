@@ -75,6 +75,7 @@ function CreateServiceForm() {
           queryKey: trpc.services.list.queryKey(),
         });
         setForm({ name: "", durationMin: "30", price: "25.00", active: true });
+        toast.success("Service created successfully");
       },
     })
   );
@@ -220,6 +221,7 @@ function ServiceRow({ service }: { service: Service }) {
       onSuccess: () => {
         invalidate();
         setIsEditing(false);
+        toast.success("Service updated successfully");
       },
     })
   );
@@ -228,6 +230,7 @@ function ServiceRow({ service }: { service: Service }) {
     trpc.services.remove.mutationOptions({
       onSuccess: () => {
         invalidate();
+        toast.success("Service deleted successfully");
       },
     })
   );

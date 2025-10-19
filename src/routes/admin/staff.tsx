@@ -109,6 +109,7 @@ function CreateStaffForm() {
           role: "Stylist",
           active: true,
         });
+        toast.success("Staff member added successfully");
       },
     })
   );
@@ -229,6 +230,7 @@ function StaffRow({ member }: { member: StaffSelect }) {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.staff.list.queryKey() });
         setIsEditing(false);
+        toast.success("Staff member updated successfully");
       },
     })
   );
@@ -237,6 +239,7 @@ function StaffRow({ member }: { member: StaffSelect }) {
     trpc.staff.delete.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.staff.list.queryKey() });
+        toast.success("Staff member deleted successfully");
       },
     })
   );
