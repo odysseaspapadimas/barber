@@ -1,5 +1,7 @@
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { integer, text, sqliteTableCreator } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+
+const sqliteTable = sqliteTableCreator((name) => `projects_${name}`);
 
 // prefer integer ms timestamps for easy arithmetic in JS
 // Use the same unixepoch(subsecond) expression as the user/account tables
@@ -41,7 +43,9 @@ export const staff = sqliteTable("staff", {
 
 export const staff_schedules = sqliteTable("staff_schedules", {
   id: integer("id").primaryKey().notNull(),
-  staffId: integer("staff_id").notNull().references(() => staff.id, { onDelete: "cascade" }),
+  staffId: integer("staff_id")
+    .notNull()
+    .references(() => staff.id, { onDelete: "cascade" }),
   weekdays: text("weekdays").notNull().default("[]"), // JSON array of weekday numbers: "[1,2,3,4,5]" for Mon-Fri
   startMin: integer("start_min").notNull(),
   endMin: integer("end_min").notNull(),
@@ -87,7 +91,9 @@ export const customers = sqliteTable("customers", {
 export const bookings = sqliteTable("bookings", {
   id: integer("id").primaryKey().notNull(),
   // Which service was booked
-  serviceId: integer("service_id").notNull().references(() => services.id),
+  serviceId: integer("service_id")
+    .notNull()
+    .references(() => services.id),
   // Nullable: when omitted the server will auto-assign an available staff
   staffId: integer("staff_id").references(() => staff.id),
   // start / end timestamps in ms since epoch

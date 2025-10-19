@@ -6,9 +6,9 @@
   "main": "@tanstack/react-start/server-entry",
   "d1_databases": [
     {
-      "binding": "barber",
-      "database_name": "barber",
-      "database_id": "396efb8a-8b8f-45ff-97ac-b7c1f4194d93",
+      "binding": "projects",
+      "database_name": "projects",
+      "database_id": "4a98c70b-5d28-4793-8117-c4e09f6324ed",
       "migrations_dir": "drizzle/migrations",
       "remote": true
     }

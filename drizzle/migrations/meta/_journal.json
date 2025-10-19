@@ -5,64 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1759940952333,
-      "tag": "0000_whole_monster_badoon",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1759955620310,
-      "tag": "0001_lumpy_dorian_gray",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1759998135816,
-      "tag": "0002_worthless_mariko_yashida",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1760025559797,
-      "tag": "0003_dapper_silk_fever",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1760042056038,
-      "tag": "0004_ancient_ogun",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1760084457723,
-      "tag": "0005_burly_proteus",
-      "breakpoints": true
-    },
-    {
-       "idx": 6,
-      "version": "6",
-      "when": 1760088958526,
-      "tag": "0006_aspiring_brother_voodoo",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "6",
-      "when": 1760387226322,
-      "tag": "0007_condemned_lord_hawal",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "6",
-      "when": 1760389018192,
-      "tag": "0008_aspiring_the_hood",
+      "when": 1760885044475,
+      "tag": "0000_mature_shocker",
       "breakpoints": true
     }
   ]
