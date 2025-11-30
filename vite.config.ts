@@ -10,8 +10,8 @@ const config = defineConfig({
     port: 3000,
   },
   plugins: [
-    tanstackStart(),
     cloudflare({ viteEnvironment: { name: "ssr" } }),
+    tanstackStart(),
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],
     }),
