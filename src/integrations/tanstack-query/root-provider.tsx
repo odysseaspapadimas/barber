@@ -24,7 +24,7 @@ function getUrl() {
   
   // Server-side: use relative URL in production/Workers, absolute in local dev
   // In Cloudflare Workers, relative URLs work for internal fetch
-  // In local dev with Vite, we need absolute localhost URL
+  // In local dev with Vite, we need absolute localhost URL.
   const isDev = process.env.NODE_ENV === "development";
   
   if (isDev) {
