@@ -6,10 +6,11 @@
   "main": "@tanstack/react-start/server-entry",
   "d1_databases": [
     {
-      "binding": "projects",
+      "binding": "DB",
       "database_name": "projects",
-      "database_id": "81ab63da-fc8c-4481-929e-0853c849b2ec",
+      "database_id": "bfe19712-4c49-43aa-a234-a0d70bcbc213",
       "migrations_dir": "drizzle/migrations",
+      "migrations_table": "_barber_migrations",
       "remote": true
     }
   ]

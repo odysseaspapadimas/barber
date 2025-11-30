@@ -12,15 +12,12 @@ export const $getSession = createIsomorphicFn()
       staleTime: 60_000, // cache for 1 minute
       revalidateIfStale: true, // fetch in background when stale
     });
-    console.log('called from client')
-
     return {
       session,
     };
   })
   .server(async (_: QueryClient) => {
     const headers = getRequestHeaders();
-    console.log('called from server')
     if (!headers) {
       return { session: null };
     }

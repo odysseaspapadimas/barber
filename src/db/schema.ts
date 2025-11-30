@@ -1,7 +1,7 @@
 import { integer, text, sqliteTableCreator } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
-const sqliteTable = sqliteTableCreator((name) => `projects_${name}`);
+const sqliteTable = sqliteTableCreator((name) => `barber_${name}`);
 
 // prefer integer ms timestamps for easy arithmetic in JS
 // Use the same unixepoch(subsecond) expression as the user/account tables

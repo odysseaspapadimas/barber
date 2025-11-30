@@ -8,7 +8,7 @@
     "build": "vite build && tsc --noEmit",
     "start": "node .output/server/index.mjs",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "wrangler d1 migrations apply projects --remote",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
     "test": "vitest run",

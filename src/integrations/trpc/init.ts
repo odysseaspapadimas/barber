@@ -59,8 +59,7 @@ export const optionalProcedure = t.procedure.use(async ({ ctx, next }) => {
 
 // Admin-only protected procedure
 export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  // Cast to any to handle session typing flexibility
-  const sessUser: any = ctx.session?.user;
+  const sessUser = ctx.session?.user;
 
   // Check if isAdmin is present in session
   if (sessUser?.isAdmin === true) {
